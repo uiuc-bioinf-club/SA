@@ -1,0 +1,8 @@
+NN_6conditions/
+processed_BSseq/
+processed_RNAseq/
+pull.sh
+raw/
+*.pkl
+.ipynb_checkpoints/
+*.Rhistory
