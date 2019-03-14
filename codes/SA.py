@@ -183,32 +183,28 @@ class Annealer(object):
         nAccept = np.zeros( (self.n_chain,),dtype= int)
         self.maxObjective = np.ones( (self.n_chain,),dtype= np.float32 )*(-99999.0)
         i = 0
-        for t in range(2, n_iter):
-            T = self.calcTemp(t, self.d_est)
+        for t in range(0, n_iter):
+            T = self.calcTemp(t+2, self.d_est)  ## +2 to prevent division by 0
             proposed = self.propose(state, proposed)
             obj_proposed =  self.calcObjective([proposed, 0])[0].squeeze()
             state, obj_state, accept = self.metropolisAccept( state, obj_state, proposed, obj_proposed, T )
             proposed = state.copy()
-            ## store iteration results
-            if t % sampleInterval == 0:
-                i+=1
-                samples[i] = state
             nAccept += accept
             self.maxObjective = np.where(obj_state > self.maxObjective, obj_state, self.maxObjective)
-        
-        if self.minimize:
-            return  samples, nAccept/(n_iter - 2.0) , -1*self.maxObjective
-        else:
-            return samples, nAccept/(n_iter - 2.0) , self.maxObjective
+            ## store iteration results
+            if t % sampleInterval == 0:
+                samples[i] = state
+                i+=1
+        return samples, nAccept/(n_iter) , -2*(int(self.minimize) -0.5)*self.maxObjective
         
     def run_save(self, n_iter, state_init, n_updates, d=None, indices_allowed=None, sampleInterval = 10,
            saveInterval = None, f_save = "tmp.pkl", n_keep = 10000 ):
         """
         n_iter - number of iterations
         n_updates - number of NT to propose changing per iteration
-        sampleInderval - iteration period for sampling chain
+        sampleInterval - iteration period for sampling chain
         saveInterval - iteration period for saving results (must be multiple of sample interval)
-        n_keep - number of samples at end of chain to keep 
+        n_keep - number of samples at end of chain to keep. Must have 2*n_keep*sampleInterval <  saveInterval
                 (data collected across last n_keep*sampleIntervaliterations)
         """
         self.n_chain = state_init.shape[0]
@@ -235,15 +231,34 @@ class Annealer(object):
         nAccept_save = np.zeros( (self.n_chain,),dtype= int)
         self.maxObjective = np.ones( (self.n_chain,),dtype= np.float32 )*(-99999.0)
         i = 0
-        for t in range(2, n_iter):
-            T = self.calcTemp(t, self.d_est)
+        for t in range(0, n_iter):
+            T = self.calcTemp(t + 2, self.d_est) ## +2 to prevent division by 0
             proposed = self.propose(state, proposed)
             obj_proposed =  self.calcObjective([proposed, 0])[0].squeeze()
             state, obj_state, accept = self.metropolisAccept( state, obj_state, proposed, obj_proposed, T )
             nAccept += accept
             proposed = state.copy()
             self.maxObjective = np.where(obj_state > self.maxObjective, obj_state, self.maxObjective)
-            if t % saveInterval == 0:
+            ## Collect samples from beginning of chain
+            if t <= sampleInterval*n_keep:
+                if t == sampleInterval*n_keep:
+                    data = OrderedDict([(0 , { "iter_idxs" : np.arange(t - n_keep*sampleInterval, t, sampleInterval),
+                                   "accFrac":  nAccept /( t +1 ),
+                                  "objective_best": -2*(int(self.minimize) -0.5)*self.maxObjective ,
+                                  "samples": samples  }) ])
+                    print("Writing results after iterations {}".format(t))
+                    f = open(f_save, 'wb')
+                    data = pickle.dump(data, f)
+                    f.close()
+                    ## Reset
+                    samples = np.zeros( ( n_keep ,)+ state.shape, dtype = np.float32 )
+                    i=0
+                else:
+                    if t % sampleInterval == 0:
+                        samples[i] = state
+                        i+=1
+            ## Collect samples every saveInterval iterations
+            if (t % saveInterval == 0) and t > 0:
                 ## save results and reset
                 nAccept_save = nAccept - nAccept_save
                 data_write = OrderedDict([(t , { "iter_idxs" : np.arange(t - n_keep*sampleInterval,t , sampleInterval) ,
@@ -257,18 +272,21 @@ class Annealer(object):
                     data.update(data_write)
                 else:
                     data = data_write
-                print("Writing results after iteration {}".format(t))
+                print("Writing results after iterations {}".format(t))
                 f = open(f_save, 'wb')
                 data = pickle.dump(data, f)
                 f.close()
+                ## Reset
                 samples = np.zeros( ( n_keep ,)+ state.shape, dtype = np.float32 )
                 i=0
+                print("sleeping 3 min")
+                time.sleep(60*3)
             if (saveInterval - (t % saveInterval))//sampleInterval <= n_keep: ## within n_keep*sampleInterval iteration of a save point 
                 ## store iteration results
                 if t % sampleInterval == 0:
                     samples[i] = state
                     i+=1
-        return  samples, nAccept/(n_iter - 2.0) , -2*(int(self.minimize) -0.5)*self.maxObjective
+        return  samples, nAccept/n_iter , -2*(int(self.minimize) -0.5)*self.maxObjective
     
     ## PLOTTING
     @staticmethod
