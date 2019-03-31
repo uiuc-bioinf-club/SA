@@ -1,18 +1,18 @@
 # Files:
 `XX.posterior.tsv` -> parameters and posterior mean for beta distribtuion at each CpG site with coverage >0 (considering both samples) on chromosomes 1-4
-	+ Columns:
-	 	+ seq — chromosome
-		+ idx — genomic index (zero based ?)
-		+ strand — 
-		+ nMe — number observed methylated (across 2 replicates)
-		+ nUMe — number observed unmethylated (across 2 replicates)
-		+ total — nME + nUMe
-		+ .alpha1 — alpha parameter of posterior Beta distrib
-		+ .beta1  — beta parameter of posterior Beta distrib
-		+ .fitted — posterior mean
-		+ .raw — MLE est of p 
-		+ .low  — some lower bound on baysian credible interval (ignore)
-		+ .high — some upper bound on baysian credible interval (ignore)
+	- Columns:
+	 	- seq — chromosome
+		- idx — genomic index (zero based ?)
+		- strand — 
+		- nMe — number observed methylated (across 2 replicates)
+		- nUMe — number observed unmethylated (across 2 replicates)
+		- total — nME + nUMe
+		- .alpha1 — alpha parameter of posterior Beta distrib
+		- .beta1  — beta parameter of posterior Beta distrib
+		- .fitted — posterior mean
+		- .raw — MLE est of p 
+		- .low  — some lower bound on baysian credible interval (ignore)
+		- .high — some upper bound on baysian credible interval (ignore)
 `XX.prior.txt` -> Parameters of prior beta distribution 
 
 # Method for posterior estimation of p mCpG using empirical bayes
