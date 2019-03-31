@@ -10,6 +10,7 @@ import numpy as np
 import sys
 import os
 import pickle
+import gzip
 from collections import OrderedDict
 from scipy.stats import  entropy
 import argparse
@@ -247,8 +248,8 @@ class Annealer(object):
                                   "objective_best": -2*(int(self.minimize) -0.5)*self.maxObjective ,
                                   "samples": samples  }) ])
                     print("Writing results after iterations {}".format(t))
-                    f = open(f_save, 'wb')
-                    data = pickle.dump(data, f)
+                    f = gzip.open(f_save + "_0.pklz" , 'wb')
+                    pickle.dump(data, f)
                     f.close()
                     ## Reset
                     samples = np.zeros( ( n_keep ,)+ state.shape, dtype = np.float32 )
@@ -265,16 +266,16 @@ class Annealer(object):
                                    "accFrac":  nAccept_save / saveInterval  ,
                                   "objective_best": -2*(int(self.minimize) -0.5)*self.maxObjective ,
                                   "samples": samples  }) ])
-                if os.path.isfile(f_save):
-                    f = open(f_save, 'rb')
-                    data = pickle.load(f)
-                    f.close()
-                    data.update(data_write)
-                else:
-                    data = data_write
+#                if os.path.isfile(f_save):
+#                    f = open(f_save, 'rb')
+#                    data = pickle.load(f)
+#                    f.close()
+#                    data.update(data_write)
+#                else:
+#                    data = data_write
                 print("Writing results after iterations {}".format(t))
-                f = open(f_save, 'wb')
-                data = pickle.dump(data, f)
+                f = gzip.open(f_save + "_{:.1e}.pklz".format(t) , 'wb')
+                pickle.dump(data_write, f)
                 f.close()
                 ## Reset
                 samples = np.zeros( ( n_keep ,)+ state.shape, dtype = np.float32 )

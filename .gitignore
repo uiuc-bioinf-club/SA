@@ -5,4 +5,7 @@ pull.sh
 raw/
 *.pkl
 .ipynb_checkpoints/
+*.Rhistor
+*.swp
 *.Rhistory
+*.pptx
